@@ -19,6 +19,7 @@ class GreetingTests(unittest.TestCase):
     def test_greetings_and_flag_combinations(self):
         cases = [
             ([], "Hello, World!\n"),
+            ([""], "Hello, !\n"),
             (["Rodrigo"], "Hello, Rodrigo!\n"),
             (["Maria Elena"], "Hello, Maria Elena!\n"),
             (["--uppercase"], "HELLO, WORLD!\n"),
@@ -36,6 +37,14 @@ class GreetingTests(unittest.TestCase):
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assertEqual(result.stdout, expected)
                 self.assertEqual(result.stderr, "")
+
+    def test_name_with_line_break_exits_with_status_two(self):
+        for line_break in ("\n", "\r", "\r\n", "\u2028"):
+            with self.subTest(line_break=line_break):
+                result = self.run_cli(f"Maria{line_break}Elena", "--repeat", "2")
+                self.assertEqual(result.returncode, 2)
+                self.assertEqual(result.stdout, "")
+                self.assertIn("name must not contain line breaks", result.stderr)
 
     def test_invalid_repeat_exits_with_status_two(self):
         for values in (["0"], ["-2"], ["2.5"], ["hello"], []):
